@@ -16,9 +16,9 @@ function project1(file)
 
     % In case the caller does not specify the input argument, we propose a
     % default one, assumed to be in the same folder where we run this example from.
-    if ~exist('file','var'), file ='Laser__2.mat'; end;
-    if ~exist('file2','var'), file2 ='IMU_dataC.mat'; end;
-    if ~exist('file3','var'), file3 ='Speed_dataC.mat'; end;
+    if ~exist('file','var'), file ='data_project1/Laser__2.mat'; end;
+    if ~exist('file2','var'), file2 ='data_project1/IMU_dataC.mat'; end;
+    if ~exist('file3','var'), file3 ='data_project1/Speed_dataC.mat'; end;
 
     load(file); 
     load(file2);
