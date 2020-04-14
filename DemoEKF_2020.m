@@ -139,7 +139,7 @@ XeDR_History= zeros(3,Li) ;
 % Although you can use this proposed Q, it can be improved. Read
 % "MTRN4010_L06_Noise_in_the_inputs_of_ProcessModel.pdf" in order to implement a good refinement. 
 
-Q = diag( [ (0.01)^2 ,(0.01)^2 , (1*pi/180)^2]) ;
+Q_state = diag( [ (0.01)^2 ,(0.01)^2 , (1*pi/180)^2]) ;
 % Q matrix. Represent the covariance of the uncertainty about the process model.
 % .....................................................
 
@@ -180,10 +180,14 @@ for i=1:Li,     % loop
     % Estimate new covariance, associated to the state after prediction
     % First , I evaluate the Jacobian matrix of the process model (see lecture notes), at X=X(k|k).
     % You should write the analytical expression on paper to understand the following line.
-    J = [ [1,0,-Dt*Noisy_speed*sin(Xe(3))  ]  ; [0,1,Dt*Noisy_speed*cos(Xe(3))] ;    [ 0,0,1 ] ] ; 
-    
+    J = [ [1,0,-Dt*Noisy_speed*sin(Xe(3))  ]  ; [0,1,Dt*Noisy_speed*cos(Xe(3))] ;    [ 0,0,1 ] ] ;
+    Pu = diag([stdDevSpeed^2,stdDevGyro^2]);
+    Fu = [Dt*cos(Xe(3)), 0;
+          Dt*sin(Xe(3)), 0;
+          0, Dt];
+    Q = Fu*Pu*Fu' + Q_state;
     % then I calculate the new coveraince, after the prediction P(K+1|K) = J*P(K|K)*J'+Q ;
-    P = J*P*J'+Q ;
+    P = J*P*J'+ Q ;
     % ATTENTION: we need, in our case, to propose a consistent Q matrix (this is part of your assignment!)
         
     % And, here, we calculate the predicted expected value. 

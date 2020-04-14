@@ -180,7 +180,10 @@ for i=1:Li,     % loop
     % Estimate new covariance, associated to the state after prediction
     % First , I evaluate the Jacobian matrix of the process model (see lecture notes), at X=X(k|k).
     % You should write the analytical expression on paper to understand the following line.
-    J = [ [1,0,-Dt*Noisy_speed*sin(Xe(3))  ]  ; [0,1,Dt*Noisy_speed*cos(Xe(3))] ;    [ 0,0,1 ] ] ; 
+    J = [ [1,0,-Dt*Noisy_speed*sin(Xe(3))  ]  ; [0,1,Dt*Noisy_speed*cos(Xe(3))] ;    [ 0,0,1 ] ] ;
+    Pu = diag([stdDevSpeed,stdDevGyro]);
+    Fu = [Dt*cos(Xe(3)), 0;
+          Dt*sin(Xe(3))];
     
     % then I calculate the new coveraince, after the prediction P(K+1|K) = J*P(K|K)*J'+Q ;
     P = J*P*J'+Q ;
@@ -235,11 +238,12 @@ for i=1:Li,     % loop
             % the "Expected output".
             ExpectedRange = eDD;   % just a coincidence: we already calculated them for the Jacobian, so I reuse it. 
             ExpectedBearing = atan2(eDY,eDX)-Xe(3)+pi/2;
-            ExpectedMeasurement = [ExpectedRange; ExpectedBearing];
+%             ExpectedMeasurement = [ExpectedRange; ExpectedBearing];
         
             % Evaluate residual (innovation)  "Y-h(Xe)" 
             %(measured output value - expected output value)
-            z  = MasuredRanges(u) - ExpectedMeasurement ;      
+            z  = [MasuredRanges(u) - ExpectedRange;
+                  wrapToPi(MeasuredBearing(u)-ExpectedBearing)] ;      
 
             % ------ covariance of the noise/uncetainty in the measurements
             R = [sdev_rangeMeasurement*sdev_rangeMeasurement*4, 0; 0,sdev_bearingMeasurement*sdev_bearingMeasurement] ;
@@ -414,9 +418,11 @@ function [nDetectedLandmarks,MasuredRanges,MeasuredBearing,IDs]=GetObservationMe
         % Here I corrupt the simulated measurements by adding some random noise (to simulate the noise that would be present in the reality)
         % this is the noise:
         noiseInMeasurements_range= ContextSimulation.sdev_rangeMeasurement*randn(size(RealRanges));
+        noiseInMeasurements_bearing= ContextSimulation.sdev_bearingMeasurement*randn(size(RealBearing));
 %         ContextSimulation.sdev_bearingMeasurement
         % here I add it to the perfect ranges' measurements
         MasuredRanges = RealRanges +  noiseInMeasurements_range ;
+        MeasuredBearing = RealBearing + noiseInMeasurements_bearing;
         % so MasuredRanges are the measurements polluted with
         % noise. I get the "perfect measurements" from the simulated
         % platform.
