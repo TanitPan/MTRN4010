@@ -235,12 +235,11 @@ for i=1:Li,     % loop
             % the "Expected output".
             ExpectedRange = eDD;   % just a coincidence: we already calculated them for the Jacobian, so I reuse it. 
             ExpectedBearing = atan2(eDY,eDX)-Xe(3)+pi/2;
-%             ExpectedMeasurement = [ExpectedRange; ExpectedBearing];
+            ExpectedMeasurement = [ExpectedRange; ExpectedBearing];
         
             % Evaluate residual (innovation)  "Y-h(Xe)" 
             %(measured output value - expected output value)
-            z  = [MasuredRanges(u) - ExpectedRange;
-                  wrapToPi(MeasuredBearing(u)-ExpectedBearing)] ;      
+            z  = MasuredRanges(u) - ExpectedMeasurement ;      
 
             % ------ covariance of the noise/uncetainty in the measurements
             R = [sdev_rangeMeasurement*sdev_rangeMeasurement*4, 0; 0,sdev_bearingMeasurement*sdev_bearingMeasurement] ;
@@ -415,11 +414,9 @@ function [nDetectedLandmarks,MasuredRanges,MeasuredBearing,IDs]=GetObservationMe
         % Here I corrupt the simulated measurements by adding some random noise (to simulate the noise that would be present in the reality)
         % this is the noise:
         noiseInMeasurements_range= ContextSimulation.sdev_rangeMeasurement*randn(size(RealRanges));
-        noiseInMeasurements_bearing= ContextSimulation.sdev_bearingMeasurement*randn(size(RealBearing));
 %         ContextSimulation.sdev_bearingMeasurement
         % here I add it to the perfect ranges' measurements
         MasuredRanges = RealRanges +  noiseInMeasurements_range ;
-        MeasuredBearing = RealBearing + noiseInMeasurements_bearing;
         % so MasuredRanges are the measurements polluted with
         % noise. I get the "perfect measurements" from the simulated
         % platform.
