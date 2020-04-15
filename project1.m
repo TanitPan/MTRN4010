@@ -307,7 +307,6 @@ corr_data(3,:)= yaw_corr;
 speed = Vel.speeds';
 %      speed = speed*-1;
 wz = corr_data(3,:);
-
 Pose = zeros(3,N);
 Pose(:,1) = [0;0;pi/2];
 X0 = [0;0;pi/2];
@@ -321,26 +320,26 @@ XL0 = [0;0;pi/2];
 XL = XL0;
 
 % obtain the robot pose (position and heading) at time scan[i]
-j=2;
-for ii= 2:N
-    dt = time_corr(ii) - time_corr(ii-1);
-    X = predictVehiclePose(X,wz(ii-1),speed(ii-1),dt); % euler approx
+j=1;
+for ii= 1:N-1
+    dt = time_corr(ii+1) - time_corr(ii);
+    X = predictVehiclePose(X,wz(ii),speed(ii),dt); % euler approx
     Pose(:,ii) = X;
     
     % handling laser scan and position frequency difference
-    if (j < length(Laser_time_corr) && Laser_time_corr(j)-time_corr(ii-1)<dt)
-        dtL = Laser_time_corr(j) -  time_corr(ii-1);
-        XL = predictVehiclePose(X,wz(ii-1),speed(ii-1),dtL); % euler approx
+    if (j <= length(Laser_time_corr) && Laser_time_corr(j)-time_corr(ii)<dt)
+        dtL = Laser_time_corr(j) -  time_corr(ii);
+        XL = predictVehiclePose(X,wz(ii),speed(ii),dtL); % euler approx
         PoseL(:,j) = XL;
         %disp(PoseL(:,j) == X)
-        disp(j)
-        disp(ii)
+%         disp(j)
+%         disp(ii)
         j = j + 1;
     end
     
 end
-Pose(2,:) = -Pose(2,:);
-PoseL(2,:) = -PoseL(2,:);
+% Pose(2,:) = -Pose(2,:); Doesnt Need anymore after removed bug
+% PoseL(2,:) = -PoseL(2,:);
 
 xL = PoseL(1,:);
 yL = PoseL(2,:);
@@ -352,7 +351,7 @@ x = Pose(1,:);
 y = Pose(2,:);
 figure(2);
 hold on;
-plot(1:44578,theta)
+plot(1:44577,theta(1:44577))
 title('Yaw Rate Integrated')
 grid on;
 xlabel('Sample');
@@ -374,7 +373,7 @@ ylabel('Speed (m/s)');
 grid on;
 
 figure(5); clf();
-plot(Pose(1,:),Pose(2,:));
+plot(Pose(1,1:44577),Pose(2,1:44577));
 title('Position')
 ylabel('Y (m)')
 xlabel('X (m)')
@@ -387,7 +386,7 @@ end
 
 function X = predictVehiclePose(X0,wz,speed,dt)
 X = X0;
-X(1:2) = X0(1:2) + dt*speed*[cos(X0(3)); -sin(X0(3))];
+X(1:2) = X0(1:2) + dt*speed*[cos(X0(3)); sin(X0(3))];
 X(3) = X0(3) + dt*wz;
 return;
 end
