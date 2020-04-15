@@ -329,10 +329,10 @@ for ii= 2:N
     
     % handling laser scan and position frequency difference
     if (j < length(Laser_time_corr) && Laser_time_corr(j)-time_corr(ii-1)<dt)
-        dtL = Laser_time_corr(j) -  time_corr(ii-1);
-        XL = predictVehiclePose(X,wz(ii-1),speed(ii-1),dtL); % euler approx
-        PoseL(:,j) = XL;
-        %disp(PoseL(:,j) == X)
+        dtL = Laser_time_corr(j) -  time_corr(ii);
+        %XL = predictVehiclePose(XL,wz(ii),speed(ii),dtL); % euler approx
+        PoseL(:,j) = X;
+        disp(PoseL(:,j) == X)
         disp(j)
         disp(ii)
         j = j + 1;
