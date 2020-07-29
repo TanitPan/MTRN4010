@@ -80,7 +80,7 @@ uicontrol('Style','pushbutton','String','END Now','Position',[90,1,80,20],'Callb
 N = dataL.N;                        %number of scans in this squence.
 
 figure('visible','on');
-% figure(6);
+% figure(10);
 clf();
 hold on;
 axis([-5 5 0 10]);                %focuses plot on this region ( of interest in L220)
@@ -450,6 +450,6 @@ R = [ cos(theta), -sin(theta);
     sin(theta), cos(theta)];
 coor = [0 0.2 0.4 0.8 1; 0 0 0 0 0];
 coor = R * coor + [x;y];
-set(robot.heading,'xdata',coor(1,:),'ydata',coor(2,:),'markersize',2,'color','r');
+set(robot.heading,'xdata',coor(1,:),'ydata',coor(2,:),'LineWidth',2,'color','r');
 set(robot.trace,'xdata',robot.traceData(1,:),'ydata',robot.traceData(2,:),'color','b');
 end

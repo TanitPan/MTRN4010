@@ -94,25 +94,69 @@ sdev_rangeMeasurement = 0.25 ;          % std. of noise in range measurements. 0
 sdev_bearingMeasurement = 2*pi/180;
 
 % .....................................................
-
+global NavigationMap;
+global pattern;
+rng(1,'twister');
+s1 = rng;
+rng(s1);
+pattern.pat1 = zeros(9,2);
+pattern.pat1 = [[ -40,0 ];[ -0,-20 ];[ 10,10 ] ;[ 30,10 ]; [-30,10]; [-20,-30]; [20,-10]; [5,0]; [5,20]];
+pattern.pat2 = rand(9,2)*70-40;
+rng(2,'twister');
+s2 = rng;
+rng(s2)
+pattern.pat3 = rand(9,2)*70-40;
+rng(3,'twister');
+s3 = rng;
+rng(s3)
+pattern.pat4 = rand(9,2)*70-40;
+rng(4,'twister');
+s4 = rng;
+rng(s4)
+pattern.pat5 = rand(9,2)*70-40;
+rng(5,'twister');
+s5 = rng;
+rng(s5)
+pattern.pat6 = rand(9,2)*70-40;
+rng(6,'twister');
+s6 = rng;
+rng(s6)
+pattern.pat7 = rand(9,2)*70-40;
+rng(7,'twister');
+s7 = rng;
+rng(s7)
+pattern.pat8 = rand(9,2)*70-40;
+rng(8,'twister');
+s8 = rng;
+rng(s8)
+pattern.pat9 = rand(9,2)*70-40;
+rng(9,'twister');
+s9 = rng;
+rng(s9)
+pattern.pat10 = rand(9,2)*70-40;
 % some parameters, for the simulation context.
 Dt=0.05 ;                       % "sample time", 50ms
-Li = 5000 ;                     % "experiment" duration, in iterations 
+Li = 2500 ;                     % "experiment" duration, in iterations used to be 5000
 DtObservations=0.250 ;          % laser "sample time" (for observations), 4Hz, approximately
 
+mae_xe = 0;
 
+for landmark_config = 1:10
+count = 1;
+data = zeros(3,9);
+while count < 10
 % .....................................................
 % Here, I create a virtual map, because this program works on a simulated process.
 % (in a real case you would have a real map)
 
 % How many landmarks do you want to use?  
-n_usedLanmarks = 5 ;    %it must be : 0 < n_usedLanmarks <5, but you can modify the function "CreateSomeMap()" to extend it.
+n_usedLanmarks = count ;    %it must be : 0 < n_usedLanmarks <5, but you can modify the function "CreateSomeMap()" to extend it.
 % just to create some landmarks
 % if you specify "n_usedLanmarks = 0", you would not have observations
 % (i.e. no updates, just predictions )
 
-global NavigationMap;
-NavigationMap = CreateSomeMap(n_usedLanmarks) ;  %creates a artificial map!
+
+NavigationMap = CreateSomeMap(n_usedLanmarks, landmark_config) ;  %creates a artificial map!
 % ................................................
 
 
@@ -130,6 +174,7 @@ Xdr = [ 0; 0;pi/2 ] ;
 Xreal_History= zeros(3,Li) ;
 Xe_History= zeros(3,Li) ;
 XeDR_History= zeros(3,Li) ;
+
 
 % .....................................................
 % I assume that every time we apply the process model to predict the evolution of the system for a 
@@ -270,7 +315,7 @@ for i=1:Li,     % loop
        
        
     end;  
-     
+  
      % -------- store some current variables, to plot later, at the end. 
      Xreal_History(:,i) = GetCurrentSimulatedState() ;
      Xe_History(:,i)    = Xe ;
@@ -283,9 +328,52 @@ end ;                           % end of while loop
 fprintf('Done. Showing results, now..\n');
 % now, we can see the resutls.
 % PLOT some results. 
-SomePlots(Xreal_History,Xe_History,XeDR_History,NavigationMap) ;
+[error_xe,error_ye,error_he,error_xdr,error_ydr,error_hdr] = SomePlots(Xreal_History,Xe_History,XeDR_History,NavigationMap) ;
 
 
+% Just add for Thesis
+Xe=Xe_History;
+%error_xe = abs(Xreal_History(1,:)-Xe(1,:));
+
+%mae_xe = sum(error_xe)/length(error_xe);
+rmse_xe = sqrt(mean(error_xe.^2));
+rmse_ye = sqrt(mean(error_ye.^2));
+rmse_he = sqrt(mean(error_he.^2));
+data(1,count) = rmse_xe;
+data(2,count) = rmse_ye;
+data(3,count) = rmse_he;
+count = count + 1;
+disp(rmse_xe);
+end %end of while loop for varying landmark number
+figure(5);
+%axis([-20 20 -20 20]);
+plot(data(1,:),'-o');
+title('X-RMSE vs Number of Landmarks');
+xlabel('Number of landmarks')
+ylabel('Error in X (m)')
+hold on;
+figure(6);
+title('Y-RMSE vs Number of Landmarks');
+xlabel('Number of landmarks')
+ylabel('Error in Y (m)')
+hold on;
+plot(data(2,:),'-o');
+figure(7);
+title('Heading-RMSE vs Number of Landmarks');
+xlabel('Number of landmarks')
+ylabel('Heading error (deg)')
+hold on;
+plot(data(3,:),'-o');
+end %end of landmark pattern loop
+figure(5);
+legend('pattern1','pattern2','pattern3','pattern4','pattern5','pattern6','pattern7','pattern8','pattern9','pattern10');
+hold off;
+figure(6);
+legend('pattern1','pattern2','pattern3','pattern4','pattern5','pattern6','pattern7','pattern8','pattern9','pattern10');
+hold off;
+figure(7);
+legend('pattern1','pattern2','pattern3','pattern4','pattern5','pattern6','pattern7','pattern8','pattern9','pattern10');
+hold off;
 return ;        
 
 
@@ -324,17 +412,52 @@ return ;
 % here I propose some speed and angular rate inputs. 
 % in real cases, they do happen, we do not propose them.
 function [speed,GyroZ] = SimuControl(X,t)
-    speed = 2 ;                                         % cruise speed, 2m/s  ( v ~ 7km/h)
-    GyroZ = 3*pi/180 + sin(0.1*2*pi*t/50)*.02 ;         % some crazy driver moving the steering wheel...
+    speed = 0.5 ;                                         % cruise speed, 0.5 m/s  ( v ~ 1.8km/h)
+%     GyroZ = 3*pi/180 + sin(0.1*2*pi*t/50)*.02 ;         % some crazy driver moving the steering wheel...
+    if t < 62.5 
+        GyroZ = 0;
+    elseif (t > 62.5) && (t < 63.5)
+        GyroZ = -pi/2;
+    else 
+        GyroZ = 0;
+    end
+    
+  
+    
 return ;
 
 
 % here I propose some map of landmarks. 
 % in real cases, we do not create it, synthetically, like here.
-function map = CreateSomeMap(n_used)
-    n_used = max(0,min(4,n_used));      % accepts no less than 1, no more than 4. 
+function map = CreateSomeMap(n_used,landmark_config)
+    global pattern;
+    % 9 landmarks used in this case
+    n_used = max(0,min(9,n_used));      % accepts no less than 1, no more than 4. 
     
-    landmarks = [  [ -40,0 ];[ -0,-20 ];[ 10,10 ] ;[ 30,10 ]  ] ;   
+    if landmark_config == 1
+        landmarks = pattern.pat1;
+    elseif landmark_config == 2
+        landmarks = pattern.pat2;
+    elseif landmark_config == 3
+        landmarks = pattern.pat3;
+    elseif landmark_config == 4
+        landmarks = pattern.pat4;
+    elseif landmark_config == 5
+        landmarks = pattern.pat5;
+    elseif landmark_config == 6
+        landmarks = pattern.pat6;
+    elseif landmark_config == 7
+        landmarks = pattern.pat7;
+    elseif landmark_config == 8
+        landmarks = pattern.pat8;
+    elseif landmark_config == 9
+        landmarks = pattern.pat9;
+    elseif landmark_config == 10
+        landmarks = pattern.pat10;
+    end
+    
+   % pattern(1,:) = [[ -40,0 ];[ -0,-20 ];[ 10,10 ] ;[ 30,10 ]; [-30,10]; [-20,-30]; [20,-10]; [5,0]; [5,20]];
+   % landmarks = [  [ -40,0 ];[ -0,-20 ];[ 10,10 ] ;[ 30,10 ]; [-30,10]; [-20,-30]; [20,-10]; [5,0]; [5,20]  ] ;   
     % you may modify this list, in case you want to add more landmarks to the navigation map.
     
     map.landmarks = landmarks(1:n_used,:) ;
@@ -445,7 +568,7 @@ function [nDetectedLandmarks,MasuredRanges,MeasuredBearing,IDs]=GetObservationMe
 
 % ====================================================
 % --- This is JUST for ploting the results
-function SomePlots(Xreal_History,Xe_History,Xdr_History,map) ;
+function [error_xe,error_ye,error_he,error_xdr,error_ydr,error_hdr] = SomePlots(Xreal_History,Xe_History,Xdr_History,map) ;
 
 
 
@@ -459,8 +582,6 @@ if (map.nLandmarks>0),
 else
     legend({'Real path','EKF Estimated path','DR Estimated path'});
 end;    
-
-
 
 
 
@@ -482,17 +603,23 @@ zoom on ; grid on; box on;
 % --------- plot errors between EKF estimates and the real values
 figure(3) ; clf ; 
 Xe=Xe_History;
-subplot(311) ; plot(Xreal_History(1,:)-Xe(1,:)) ;ylabel('x-xe (m)') ;
+error_xe = Xreal_History(1,:)-Xe(1,:);
+error_ye = Xreal_History(2,:)-Xe(2,:);
+error_he = 180/pi*(Xreal_History(3,:)-Xe(3,:));
+subplot(311) ; plot(error_xe) ;ylabel('x-xe (m)') ;
 title('Performance EKF') ;
-subplot(312) ; plot(Xreal_History(2,:)-Xe(2,:)) ;ylabel('y-ye (m)') ;
-subplot(313) ; plot(180/pi*(Xreal_History(3,:)-Xe(3,:))) ;ylabel('heading error (deg)') ;
+subplot(312) ; plot(error_ye) ;ylabel('y-ye (m)') ;
+subplot(313) ; plot(error_he) ;ylabel('heading error (deg)') ;
 
 figure(4) ; clf ; 
 Xe=Xdr_History;
-subplot(311) ; plot(Xreal_History(1,:)-Xe(1,:)) ;ylabel('x-xe (m)') ;
+error_xdr = Xreal_History(1,:)-Xe(1,:);
+error_ydr = Xreal_History(2,:)-Xe(2,:);
+error_hdr = 180/pi*(Xreal_History(3,:)-Xe(3,:));
+subplot(311) ; plot(error_xdr) ;ylabel('x-xe (m)') ;
 title('Performance Dead Reckoning (usually, not good)') ;
-subplot(312) ; plot(Xreal_History(2,:)-Xe(2,:)) ;ylabel('y-ye (m)') ;
-subplot(313) ; plot(180/pi*(Xreal_History(3,:)-Xe(3,:))) ;ylabel('heading error (deg)') ;
+subplot(312) ; plot(error_ydr) ;ylabel('y-ye (m)') ;
+subplot(313) ; plot(error_hdr) ;ylabel('heading error (deg)') ;
 Xe=[];
 
 return ;
